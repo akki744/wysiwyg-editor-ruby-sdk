@@ -12,14 +12,10 @@ module FroalaEditorSDK
             allowedExts: [".txt", ".pdf", ".doc", ".json", ".html"],
             allowedMimeTypes: [ "text/plain", "application/msword", "application/x-pdf", "application/pdf", "application/json","text/html" ]
         },
-        resize: nil
+        resize: nil,
+        file_upload_path: 'public/uploads/files',
+        file_access_path: '/uploads/'
     }
-
-    # Default upload path.
-    @default_upload_path = "public/uploads/files"
-
-    # Defult file access path
-    @default_file_access_path = "/uploads/"
 
     # Uploads a file to the server.
     # Params:
@@ -27,7 +23,7 @@ module FroalaEditorSDK
     # +upload_path+:: Server upload path, a storage path where the file will be stored.
     # +options+:: Hash object that contains configuration parameters for uploading a file.
     # Returns json object
-    def self.upload(params, upload_path = @default_upload_path, file_access_path = @default_file_access_path, options = {})
+    def self.upload(params, options = {})
 
       # Merge options.
       options = @default_options.merge(options)
@@ -41,10 +37,10 @@ module FroalaEditorSDK
 
         # Uses the Utlis name function to generate a random name for the file.
         file_name = Utils.name(file)
-        path = Rails.root.join(upload_path, file_name)
+        path = Rails.root.join(options[:file_upload_path], file_name)
 
         # Saves the file on the server and returns the path.
-        serve_url = save(file, path, file_access_path)
+        serve_url = save(file, path, options[:file_access_path])
 
         resize(options, path) if !options[:resize].nil?
 
@@ -80,9 +76,12 @@ module FroalaEditorSDK
     # +file+:: The file that will be deleted from the server.
     # +path+:: The server path where the file resides.
     # Returns true or false.
-    def self.delete(file = params[:file], path)
+    def self.delete(file = params[:file], options = {})
 
-      file_path = Rails.root.join(path, ::File.basename(file))
+      # Merge options.
+      options = @default_options.merge(options)
+
+      file_path = Rails.root.join(options[:file_access_path], ::File.basename(file))
       begin
         if ::File.delete(file_path)
           return true
